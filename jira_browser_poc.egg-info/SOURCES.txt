@@ -1,0 +1,6 @@
+pyproject.toml
+jira_browser_poc.egg-info/PKG-INFO
+jira_browser_poc.egg-info/SOURCES.txt
+jira_browser_poc.egg-info/dependency_links.txt
+jira_browser_poc.egg-info/requires.txt
+jira_browser_poc.egg-info/top_level.txt

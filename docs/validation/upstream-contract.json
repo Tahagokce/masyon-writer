@@ -1,0 +1,22 @@
+{
+  "kind": "UPSTREAM_CONTRACT_ONLY",
+  "realGeminiRun": false,
+  "preflight": {
+    "isError": true,
+    "error": "Configured Playwright did not generate stable ID locators. No fallback is allowed.",
+    "idFirstVerified": false,
+    "corePath": "/private/tmp/masyon-upstream/core/package",
+    "version": "1.64.0-alpha-1790635538000",
+    "bundleSha256": "cd6730be1bbcff00771a0fc1390f200306d28428ce68e305420ca623cb39cdeb",
+    "observedCode": [
+      "await page.getByRole('button', { name: 'Finalize' }).click();",
+      "await page.getByRole('textbox', { name: 'Code' }).fill('POC_PREFLIGHT');"
+    ]
+  },
+  "assertions": 8,
+  "popupAliases": true,
+  "secretScan": "passed",
+  "hiddenElementRejected": true,
+  "recordingSyntax": true,
+  "replay": "passed"
+}

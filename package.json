@@ -1,0 +1,12 @@
+{
+  "name": "jira-browser-poc-bridge",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/bridge.test.mjs tests/snapshot.test.mjs tests/modal.live.test.mjs tests/assertion-recovery.live.test.mjs tests/orchestration.live.test.mjs tests/action-logging.test.mjs tests/action-logging.live.test.mjs tests/semantic-resolver.test.mjs tests/semantic.live.test.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.1",
+    "typescript": "5.9.3"
+  }
+}

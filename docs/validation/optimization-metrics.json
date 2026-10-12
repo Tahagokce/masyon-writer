@@ -1,0 +1,38 @@
+{
+  "baselineProvidedByUser": {
+    "steps": 5,
+    "geminiRequests": 37,
+    "inputTokens": 169981,
+    "browserToolCalls": 33,
+    "mcpToolCalls": 45
+  },
+  "newRealRun": {
+    "status": "FAILED",
+    "stepReached": 1,
+    "model": "gemini-3.8-flash",
+    "failure": "net::ERR_NAME_NOT_RESOLVED",
+    "metrics": {
+      "geminiRequests": 1,
+      "inputTokens": 2963,
+      "outputTokens": 26,
+      "thoughtTokens": 99,
+      "browserToolCalls": 1,
+      "mcpToolCalls": 5,
+      "snapshotCount": 0,
+      "snapshotFallbackCount": 0,
+      "contextCharactersSent": 1082,
+      "averageGeminiRequestsPerStep": 1.0,
+      "averageInputTokensPerStep": 2963.0
+    }
+  },
+  "liveBaselineComparable": false,
+  "reason": "Application DNS unavailable; user confirmed corporate network cannot be reached.",
+  "controlledContextMeasurement": {
+    "kind": "SERIALIZED_CONTEXT_CHARACTERS_ONLY",
+    "requests": 12,
+    "oldCharacters": 127397,
+    "newCharacters": 49044,
+    "reductionPercent": 61.5,
+    "excludes": "system instructions and tool schemas; no live Gemini token saving claimed"
+  }
+}

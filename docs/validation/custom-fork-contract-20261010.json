@@ -1,0 +1,20 @@
+{
+  "kind": "CUSTOM_FORK_CONTRACT",
+  "realGeminiRun": false,
+  "preflight": {
+    "idFirstVerified": true,
+    "corePath": "/Users/sahih/project/playwright-id-first/packages/playwright-core",
+    "version": "1.65.0-next",
+    "bundleSha256": "836cd7c1430f827aae048a360315adc7d6e068acea3c8f9fe30975a3302ccbe9",
+    "observedCode": [
+      "await page.locator('#poc-stable-button').click();",
+      "await page.locator('#poc-stable-input').fill('POC_PREFLIGHT');"
+    ]
+  },
+  "assertions": 8,
+  "popupAliases": true,
+  "secretScan": "passed",
+  "hiddenElementRejected": true,
+  "recordingSyntax": true,
+  "replay": "passed"
+}

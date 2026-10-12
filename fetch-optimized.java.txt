@@ -1,0 +1,123 @@
+@Override
+public List<ConnectionItem> fetch(PassengerDataReceiveContext context) {
+    FlightIntegrationRequiredDataDto flight = context.getFlight();
+    try {
+        GetFlightConnectionListRequestDto request = connectionMapper.flightToBaseRequestDto(flight);
+        request.setFlightType(FlightType.INBOUND);
+
+        log.info("(fetch) data fetching for context: {} request: {}", context, request);
+
+        List<ConnectionItem> connectionItem = listAdapterService.getFlightConnectionList(request, context.generateTransactionId());
+        log.info("(fetch) data fetched for context: {} connectionItem: {}", context, connectionItem);
+
+        boolean isHubStation = globalMasterDataClient.getHubInfo(flight.getDepartureLocationCode(), flight.getMarketingAirlineCode());
+        log.info("(fetch) is hub station for context: {} flight: {} isHubStation: {}", context, flight, isHubStation);
+
+        boolean isCustomsStation = globalMasterDataClient.getCustomsInfo(flight.getArrivalLocationCode(), flight.getMarketingAirlineCode());
+        log.info("(fetch) is customs station for context: {} flight: {} isCustomsStation: {}", context, flight, isCustomsStation);
+
+        String effectedAirlines = systemParameterService.getOrDefaultValue(DcsSystemParameterKey.CONNECTION_INBOUND_EFFECTED_AIRLINE_CODE);
+        log.info("(fetch) effected airlines for context: {} flight: {} effectedAirlines: {}", context, flight, effectedAirlines);
+
+        Map<UUID, BusinessRuleExtractBulkDto>  uuidBusinessRuleMap = new HashMap<>();
+        Map<UUID, ConnectionItem>  uuidConnectionItemMap = new HashMap<>();
+        for (ConnectionItem i : connectionItem) {
+            if (!shouldContinue(effectedAirlines, i.getAirlineCode())) {
+                log.info("(fetch) airline code is not valid for context: {} flight: {}, connectionItem: {}", context, flight, connectionItem);
+                continue;
+            }
+
+            FlightCategorisationBRDto connectedFlight = dcsFlightInfoService.findFlightIdByScheduledDepartureStationAndFlightNumberAndFlightDateUtc(
+                    i.getDepartureCode(),
+                    i.getFlightNumber(),
+                    i.getArrivalDate(),
+                    i.getAirlineCode()
+            );
+
+            if (Objects.isNull(connectedFlight)) {
+                log.info("(fetch) connected flight not found for context: {} flight: {}, connectionItem: {}", context, flight, connectionItem);
+                continue;
+            }
+
+            i.setFlightId(connectedFlight.getFlightId());
+
+            if (CollectionUtils.isNotEmpty(i.getDetails())) {
+                int economyAcceptedPaxCount = firstPaxCount(
+                        i.getDetails(), CabinClassType.ECONOMY, ConnectionItemDetailType.ACTUAL);
+                int economyBookedPaxCount = firstPaxCount(
+                        i.getDetails(), CabinClassType.ECONOMY, ConnectionItemDetailType.EXPECTED);
+                int businessAcceptedPaxCount = firstPaxCount(
+                        i.getDetails(), CabinClassType.BUSINESS, ConnectionItemDetailType.ACTUAL);
+                int businessBookedPaxCount = firstPaxCount(
+                        i.getDetails(), CabinClassType.BUSINESS, ConnectionItemDetailType.EXPECTED);
+
+                if ((businessAcceptedPaxCount > 0 && economyAcceptedPaxCount > 0)
+                    || (businessBookedPaxCount > 0 && economyBookedPaxCount > 0)) {
+                    log.info("(fetch) connected flight has multiple class cound: {} flight: {}, connectionItem: {} connectedFlight: {} sourceFlight: {}", context, flight, connectionItem, connectedFlight, flight);
+                    continue;
+                }
+            }
+
+            if (!isHubStation) {
+                log.info("(fetch) connected flight is not hub station for context: {} flight: {}, connectionItem: {} connectedFlight: {} sourceFlight: {}", context, flight, connectionItem, connectedFlight, flight);
+                continue;
+            }
+
+            GetCommodityCategorisationActionDto getActionRequest = new GetCommodityCategorisationActionDto();
+            getActionRequest.setTraffic(connectedFlight.getTraffic());
+            getActionRequest.setDeparture(connectedFlight.getDeparture());
+            getActionRequest.setArrival(connectedFlight.getArrival());
+            getActionRequest.setCommoditySubtype(TransferBaggageType.BT.getType());
+            getActionRequest.setPassengerClass(DCSAdapterConstants.ALL);
+            getActionRequest.setConnectionType(ConnectionType.INBOUND.name());
+            getActionRequest.setCustoms(isCustomsStation ? DCSAdapterConstants.YES : DCSAdapterConstants.NO);
+
+            UUID uuid = UUID.randomUUID();
+            BusinessRuleExtractBulkDto value = new BusinessRuleExtractBulkDto();
+            value.setAirlineCode(connectedFlight.getAirlineCode());
+            value.setPayload(getActionRequest);
+
+            uuidBusinessRuleMap.put(uuid, value);
+            uuidConnectionItemMap.put(uuid, i);
+        }
+
+        if (!uuidBusinessRuleMap.isEmpty()) {
+            Map<UUID, CommodityCategorisationBusinessRuleActionDto> businessRule = commodityCategorisationBusinessRuleService.extractBulk(uuidBusinessRuleMap);
+
+            for (Map.Entry<UUID, ConnectionItem> entry : uuidConnectionItemMap.entrySet()) {
+                CommodityCategorisationBusinessRuleActionDto actionDto = businessRule.getOrDefault(entry.getKey(), null);
+
+                if (Objects.isNull(actionDto)) {
+                    log.info("(fetch) commodity categorisation business rule not found for context: {} flight: {}, connectionItem: {}", context, flight, entry.getValue());
+                    continue;
+                }
+
+                entry.getValue().setTag(actionDto.getConnectionTag());
+                entry.getValue().setCategoryType(actionDto.getCategoryType());
+                entry.getValue().setBusinessRuleId(actionDto.getBusinessRuleId());
+            }
+        }
+
+        log.info("(fetch) data prepared connection flights. context: {} connectionItem: {}", context, connectionItem);
+
+        return connectionItem;
+    } catch (Exception e) {
+        log.info("(fetch) error occurred when fetch data from dcs for context: {}", context);
+        throw e;
+    }
+}
+
+private int firstPaxCount(
+        Iterable<ConnectionItemDetail> details,
+        CabinClassType cabinClass,
+        ConnectionItemDetailType type) {
+    for (ConnectionItemDetail detail : details) {
+        if (Objects.equals(detail.getClassCode(), cabinClass.getCode())
+                && Objects.equals(detail.getType(), type)
+                && Objects.equals(detail.getDataType(), ConnectionItemDetailDataType.PAX)) {
+            // findFirst() also throws when the first matching count is null.
+            return Objects.requireNonNull(detail.getCount());
+        }
+    }
+    return 0;
+}

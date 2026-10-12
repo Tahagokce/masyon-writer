@@ -1,0 +1,5 @@
+Action,Data,Expected Result
+Open the application and log in,"Use WBS_BASE_URL; fill username with WBS_USERNAME and password with WBS_PASSWORD, then click Log in",Dashboard is visible
+Open the Flights menu,,Flights list is visible
+Open the flight detail in its new tab,Select the flight named Demo Flight,Flight details are visible in the new tab
+Create a new SL Code,Generate a unique slCode and use it in the SL Code field then click Save,The created SL Code appears in the list

@@ -1,0 +1,15 @@
+[project]
+name = "jira-browser-poc"
+version = "0.1.0"
+description = "Sequential Jira CSV execution through Gemini and fork-backed Playwright MCP"
+requires-python = ">=3.11"
+dependencies = ["google-genai==1.75.0", "mcp==1.30.0"]
+
+[project.scripts]
+masyon-writer = "masyon_writer:main"
+
+[tool.setuptools]
+py-modules = ["masyon_writer"]
+
+[tool.setuptools.packages.find]
+include = ["src*"]

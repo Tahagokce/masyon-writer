@@ -1,0 +1,7 @@
+Metadata-Version: 2.4
+Name: jira-browser-poc
+Version: 0.1.0
+Summary: Sequential Jira CSV execution through Gemini and fork-backed Playwright MCP
+Requires-Python: >=3.11
+Requires-Dist: google-genai<2,>=1.0
+Requires-Dist: mcp<2,>=1.12
